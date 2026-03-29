@@ -1,22 +1,21 @@
-# frontend
-frontend/node_modules/
-frontend/dist/
-frontend/build/
+# Frontend
+qrc-frontend/node_modules/
+qrc-frontend/dist/
 
-# backend
-backend/target/
+# Backend
+QRConnect-Backend/target/
 
-# environment
+# Env
 .env
 *.local
 
-# logs
+# Logs
 *.log
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
