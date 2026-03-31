@@ -87,4 +87,26 @@ public class ProfileService  {
         return dto;
     }
 
+    public ProfileResponseDto getProfileByUser(User user) {
+
+        Profile profile = profileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+        ProfileResponseDto dto = new ProfileResponseDto();
+
+        dto.setId(profile.getId()); // VERY IMPORTANT
+        dto.setName(profile.getName());
+        dto.setEmail(profile.getEmail());
+        dto.setBio(profile.getBio());
+        dto.setProfession(profile.getProfession());
+        dto.setInstagram(profile.getInstagram());
+        dto.setLinkedin(profile.getLinkedin());
+        dto.setGithub(profile.getGithub());
+        dto.setTwitter(profile.getTwitter());
+        dto.setFacebook(profile.getFacebook());
+        dto.setContactNumber(profile.getContactNumber());
+
+        return dto;
+    }
+
 }

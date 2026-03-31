@@ -37,4 +37,7 @@ WHERE (c.sender = :user OR c.receiver = :user)
 AND c.status = 'ACCEPTED'
 """)
     List<Connection> findAcceptedConnections(User user);
+
+
+
 }

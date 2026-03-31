@@ -22,6 +22,11 @@ export const respondToRequest = async (id, accept) => {
 };
 
 export const getMyConnections = async () => {
-  const res = await api.get("/connections/my");
+  const res = await api.get("/connections/my-connections");
   return res.data;
 };
+
+// export const getMyMutualConnections = async () => {
+//   const response = await api.get("/connections/my-connections");
+//   return response.data;
+// };

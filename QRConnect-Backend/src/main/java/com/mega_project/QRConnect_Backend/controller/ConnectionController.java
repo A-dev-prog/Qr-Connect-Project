@@ -49,15 +49,24 @@ public class ConnectionController {
         );
     }
 
-    @GetMapping("/my")
-    public List<User> getMyConnections(User user) {
+//    @GetMapping("/my")
+//    public List<User> getMyConnections(User user) {
+//
+//        List<Connection> connections =
+//                connectionRepository.findAcceptedConnections(user);
+//
+//        return connections.stream()
+//                .map(c -> c.getSender().equals(user) ? c.getReceiver() : c.getSender())
+//                .toList();
+//    }
 
-        List<Connection> connections =
-                connectionRepository.findAcceptedConnections(user);
+    @GetMapping("/my-connections")
+    public ResponseEntity<?> getMyConnections(
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        return connections.stream()
-                .map(c -> c.getSender().equals(user) ? c.getReceiver() : c.getSender())
-                .toList();
+        return ResponseEntity.ok(
+                connectionService.getMyConnections(userDetails.getUsername())
+        );
     }
 
 }

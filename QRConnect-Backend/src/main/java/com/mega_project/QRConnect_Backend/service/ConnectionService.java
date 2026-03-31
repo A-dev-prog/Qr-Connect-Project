@@ -1,5 +1,6 @@
 package com.mega_project.QRConnect_Backend.service;
 
+import com.mega_project.QRConnect_Backend.dtos.ProfileResponseDto;
 import com.mega_project.QRConnect_Backend.dtos.connection_dto.PendingRequestDto;
 import com.mega_project.QRConnect_Backend.dtos.previev_dto.ScanFullResponse;
 import com.mega_project.QRConnect_Backend.dtos.previev_dto.ScanPreviewResponse;
@@ -25,6 +26,8 @@ public class ConnectionService {
     private  UserRepository userRepository;
     @Autowired
     private ProfileRepository profileRepository;
+    @Autowired
+    private ProfileService profileService;
 
     public void sendRequest(String senderEmail, Long receiverId) {
 
@@ -117,6 +120,29 @@ public class ConnectionService {
         }
 
         return buildFullProfileResponse(targetProfile, "CONNECTED");
+    }
+
+    public List<ProfileResponseDto> getMyConnections(String email) {
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Connection> connections =
+                connectionRepository.findAcceptedConnections(currentUser);
+
+        return connections.stream()
+                .map(conn -> {
+                    User otherUser;
+
+                    if (conn.getSender().getId().equals(currentUser.getId())) {
+                        otherUser = conn.getReceiver();
+                    } else {
+                        otherUser = conn.getSender();
+                    }
+
+                    return profileService.getProfileByUser(otherUser);
+                })
+                .toList();
     }
 
     private Object buildFullProfileResponse(Profile targetProfile, String connected) {
