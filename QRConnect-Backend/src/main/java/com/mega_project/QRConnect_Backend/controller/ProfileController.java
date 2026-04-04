@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -26,6 +27,15 @@ public class ProfileController {
         return ResponseEntity.ok("Profile created");
     }
 
+    @PostMapping("/upload-image")
+    public ResponseEntity<?> uploadProfileImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") MultipartFile file) {
+
+        profileService.uploadProfileImage(userDetails.getUsername(), file);
+        return ResponseEntity.ok("Image uploaded");
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ProfileResponseDto> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -38,11 +48,21 @@ public class ProfileController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProfileResponseDto> getProfileById(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         return ResponseEntity.ok(
-                profileService.getProfileById(id)
+                profileService.getProfileById(id, userDetails.getUsername())
         );
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody ProfileRequestDto dto) {
+
+        profileService.updateProfile(userDetails.getUsername(), dto);
+        return ResponseEntity.ok("Profile updated");
     }
 
 

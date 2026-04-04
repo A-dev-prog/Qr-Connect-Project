@@ -49,16 +49,6 @@ public class ConnectionController {
         );
     }
 
-//    @GetMapping("/my")
-//    public List<User> getMyConnections(User user) {
-//
-//        List<Connection> connections =
-//                connectionRepository.findAcceptedConnections(user);
-//
-//        return connections.stream()
-//                .map(c -> c.getSender().equals(user) ? c.getReceiver() : c.getSender())
-//                .toList();
-//    }
 
     @GetMapping("/my-connections")
     public ResponseEntity<?> getMyConnections(

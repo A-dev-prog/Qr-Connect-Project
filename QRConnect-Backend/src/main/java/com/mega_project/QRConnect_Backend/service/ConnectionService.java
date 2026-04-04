@@ -125,24 +125,31 @@ public class ConnectionService {
     public List<ProfileResponseDto> getMyConnections(String email) {
 
         User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow();
 
         List<Connection> connections =
                 connectionRepository.findAcceptedConnections(currentUser);
 
-        return connections.stream()
-                .map(conn -> {
-                    User otherUser;
+        return connections.stream().map(conn -> {
 
-                    if (conn.getSender().getId().equals(currentUser.getId())) {
-                        otherUser = conn.getReceiver();
-                    } else {
-                        otherUser = conn.getSender();
-                    }
+            User otherUser = conn.getSender().equals(currentUser)
+                    ? conn.getReceiver()
+                    : conn.getSender();
 
-                    return profileService.getProfileByUser(otherUser);
-                })
-                .toList();
+            Profile profile = profileRepository.findByUser(otherUser)
+                    .orElseThrow();
+
+            ProfileResponseDto dto = new ProfileResponseDto();
+
+            dto.setId(profile.getId());
+            dto.setName(profile.getName());
+            dto.setProfession(profile.getProfession());
+            dto.setBio(profile.getBio());
+            dto.setProfileImageUrl(profile.getProfileImageUrl()); // 🔥 IMPORTANT
+
+            return dto;
+
+        }).toList();
     }
 
     private Object buildFullProfileResponse(Profile targetProfile, String connected) {

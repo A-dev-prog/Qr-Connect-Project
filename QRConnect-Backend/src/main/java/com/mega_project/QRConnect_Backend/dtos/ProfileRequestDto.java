@@ -10,6 +10,7 @@ import lombok.Setter;
 public class ProfileRequestDto {
     private String name;
     private String contactNumber;
+    private String email;
     private String facebook;
     private String instagram;
     private String linkedin;
