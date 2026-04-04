@@ -17,3 +17,23 @@ export const getProfileById = async (id) => {
   const response = await api.get(`/profile/${id}`);
   return response.data;
 };
+
+//upload user image
+export const uploadProfileImage = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await api.post("/profile/upload-image", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return res.data;
+};
+
+// update profile
+export const updateProfile = async (profileData) => {
+  const res = await api.put("/profile/update", profileData);
+  return res.data;
+};
