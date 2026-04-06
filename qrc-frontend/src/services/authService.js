@@ -7,5 +7,7 @@ export const registerUser = async (data) => {
 
 export const loginUser = async (data) => {
   const response = await api.post("/auth/login", data);
+localStorage.setItem("token", response.data.token);
+localStorage.setItem("userId", response.data.id); // 🔥 
   return response.data;
 };
