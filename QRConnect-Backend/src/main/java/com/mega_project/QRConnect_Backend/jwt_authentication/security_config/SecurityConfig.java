@@ -40,6 +40,8 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/profile/**",
                                 "/api/qr/**",
+                                "/ws/**",
+                                "/ws/info/**",
                                 "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()

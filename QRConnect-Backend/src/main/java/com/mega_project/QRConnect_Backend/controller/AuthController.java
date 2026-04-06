@@ -15,7 +15,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -54,26 +57,31 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(
-            @RequestBody UserLoginRequestDto request) {
+    public ResponseEntity<?> login(@RequestBody UserLoginRequestDto request) {
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
+        // 🔥 1. LOAD USER FROM DB
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 🔥 2. CHECK PASSWORD (IMPORTANT)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        // 🔥 3. GENERATE TOKEN (USING YOUR METHOD)
+        String token = jwtService.generateToken(
+                new org.springframework.security.core.userdetails.User(
+                        user.getEmail(),
+                        user.getPassword(),
+                        new ArrayList<>()
                 )
         );
 
-        UserDetails userDetails =
-                new org.springframework.security.core.userdetails.User(
-                        request.getEmail(),
-                        "",
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                );
+        // 🔥 4. RETURN TOKEN + USER ID
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("id", user.getId()); // ⭐ IMPORTANT FIX
 
-        String token = jwtService.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthResponseDto(token));
+        return ResponseEntity.ok(response);
     }
-
 }
