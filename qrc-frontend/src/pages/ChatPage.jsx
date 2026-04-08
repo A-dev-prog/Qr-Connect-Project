@@ -2,11 +2,11 @@ import Sidebar from "../components/Sidebar";
 import MobileNav from "../components/MobileNav";
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { getMyConnections } from "../services/connectionService";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
 function ChatPage() {
-  const { id } = useParams(); // receiverId
   const currentUserId = Number(localStorage.getItem("userId"));
 
   const [messages, setMessages] = useState([]);
@@ -17,6 +17,28 @@ function ChatPage() {
   const stompClientRef = useRef(null);
   const subscriptionRef = useRef(null);
   const connectedRef = useRef(false);
+
+  const [connections, setConnections] = useState([]);
+  const [activeUser, setActiveUser] = useState(null);
+  const receiverId = activeUser?.id;
+
+  useEffect(() => {
+    const loadConnections = async () => {
+      try {
+        const data = await getMyConnections();
+        setConnections(data);
+
+        // 🔥 auto select first user
+        if (data.length > 0) {
+          setActiveUser(data[0]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadConnections();
+  }, []);
 
   // 🔥 CONNECT WEBSOCKET
   useEffect(() => {
@@ -61,18 +83,13 @@ function ChatPage() {
             return [
               ...prev,
               {
-                id:
-                  newMessage.id ||
-                  `${newMessage.senderId}-${Date.now()}`,
+                id: newMessage.id || `${newMessage.senderId}-${Date.now()}`,
                 text: newMessage.content,
-                sender:
-                  newMessage.senderId == currentUserId
-                    ? "me"
-                    : "other",
+                sender: newMessage.senderId == currentUserId ? "me" : "other",
               },
             ];
           });
-        }
+        },
       );
     };
 
@@ -105,6 +122,12 @@ function ChatPage() {
   const handleSend = () => {
     if (!input.trim()) return;
 
+    // ✅ ADD THIS CHECK
+    if (!activeUser) {
+      alert("Select a user first");
+      return;
+    }
+
     if (!isConnected) {
       alert("Connecting... please wait ⏳");
       return;
@@ -116,7 +139,7 @@ function ChatPage() {
       destination: "/app/chat.send",
       body: JSON.stringify({
         senderId: currentUserId,
-        receiverId: Number(id),
+        receiverId: Number(activeUser.id),
         content: input,
       }),
     });
@@ -134,13 +157,30 @@ function ChatPage() {
           <h2 className="text-lg font-semibold mb-4">Chats</h2>
 
           <div className="space-y-3">
-            <div className="p-3 bg-gray-900 rounded-lg flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full"></div>
-              <div>
-                <p className="font-medium">User {id}</p>
-                <p className="text-sm text-green-400">Connected</p>
+            {connections.map((user) => (
+              <div
+                key={user.id}
+                onClick={() => {
+                  setActiveUser(user);
+                  setMessages([]); // clear old chat
+                }}
+                className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 transition ${
+                  activeUser?.id === user.id
+                    ? "bg-blue-600"
+                    : "bg-gray-900 hover:bg-gray-800"
+                }`}
+              >
+                <img
+                  src={user.profileImageUrl || "https://via.placeholder.com/40"}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+
+                <div>
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-sm text-gray-400">{user.profession}</p>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -148,9 +188,16 @@ function ChatPage() {
         <div className="flex-1 flex flex-col">
           {/* HEADER */}
           <div className="border-b border-gray-800 p-4 flex items-center gap-3 bg-gray-900/60 backdrop-blur-lg">
-            <div className="w-10 h-10 bg-blue-600 rounded-full"></div>
+            <img
+              src={
+                activeUser?.profileImageUrl || "https://via.placeholder.com/40"
+              }
+              className="w-10 h-10 rounded-full object-cover"
+            />
             <div>
-              <p className="font-semibold">User {id}</p>
+              <p className="font-semibold">
+                {activeUser?.name || "Select User"}
+              </p>
               <p className="text-sm text-green-400">Online</p>
             </div>
           </div>
@@ -161,9 +208,7 @@ function ChatPage() {
               <div
                 key={msg.id || index}
                 className={`max-w-xs md:max-w-md px-4 py-2 rounded-xl ${
-                  msg.sender === "me"
-                    ? "bg-blue-600 ml-auto"
-                    : "bg-gray-800"
+                  msg.sender === "me" ? "bg-blue-600 ml-auto" : "bg-gray-800"
                 }`}
               >
                 {msg.text}

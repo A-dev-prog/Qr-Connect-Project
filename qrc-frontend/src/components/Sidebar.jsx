@@ -114,7 +114,7 @@ function Sidebar() {
 
         {/* Chat */}
         <NavLink
-          to="/chat/:id"
+          to="/chat"
           className={({ isActive }) =>
             `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
             ${
