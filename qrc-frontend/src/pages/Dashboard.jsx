@@ -1,4 +1,6 @@
-
+import Sidebar from "../components/Sidebar";
+import Topbar from "../components/Topbar";
+import MobileNav from "../components/MobileNav";
 
 function Dashboard() {
   return (

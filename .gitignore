@@ -4,6 +4,7 @@ qrc-frontend/dist/
 
 # Backend
 QRConnect-Backend/target/
+uploads/
 
 # Env
 .env

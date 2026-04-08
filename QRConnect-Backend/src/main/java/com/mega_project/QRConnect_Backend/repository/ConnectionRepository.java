@@ -39,5 +39,12 @@ AND c.status = 'ACCEPTED'
     List<Connection> findAcceptedConnections(User user);
 
 
+    @Query("""
+SELECT c FROM Connection c
+WHERE (c.sender.id = :userId OR c.receiver.id = :userId)
+AND c.status = 'ACCEPTED'
+""")
+    List<Connection> findAcceptedConnections(Long userId);
+
 
 }

@@ -1,89 +1,259 @@
 import Sidebar from "../components/Sidebar";
+import Topbar from "../components/Topbar";
 import MobileNav from "../components/MobileNav";
+import { useEffect, useRef, useState } from "react";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
+import { useNavigate } from "react-router-dom";
+import { getExternalFeed } from "../services/feedService"; 
+import { FaNewspaper, FaPlus, FaGlobe } from "react-icons/fa";
+import {
+  getTrendingFeed,
+  getLatestFeed,
+  createPost,
+} from "../services/feedService";
 
 function FeedPage() {
-  return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white overflow-hidden">
+  const [trending, setTrending] = useState([]);
+  const [latest, setLatest] = useState([]);
+  const [input, setInput] = useState("");
+  const [external, setExternal] = useState([]);
+  const [activeTab, setActiveTab] = useState("posts"); // default
+const navigate = useNavigate();
 
-      {/* Fixed Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
+  const stompClientRef = useRef(null);
+  const subscriptionRef = useRef(null);
 
-      {/* Scrollable Feed Content */}
-      <div className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">
+  // 🔥 LOAD INITIAL DATA
+  useEffect(() => {
+    const loadFeeds = async () => {
+      try {
+        const t = await getTrendingFeed();
+        const l = await getLatestFeed();
+        const e = await getExternalFeed();
+        setExternal(e);
 
-        <h1 className="text-2xl font-bold mb-8">Community Feed</h1>
+        setTrending(t);
+        setLatest(l);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-        {/* TECH SECTION */}
-        <div className="mb-10">
-          <h2 className="text-xl font-semibold text-blue-400 mb-4">
-            🚀 Tech Updates
-          </h2>
+    loadFeeds();
+  }, []);
 
-          <div className="space-y-6">
-            <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 p-5 rounded-xl hover:border-blue-500 transition">
-              <h3 className="font-semibold text-lg">
-                New AI Developer Tools Released
-              </h3>
-              <p className="text-gray-400 mt-2">
-                Powerful automation tools now help developers generate backend APIs instantly.
-              </p>
-            </div>
+  // 🔥 REAL-TIME FEED SUBSCRIBE
+  useEffect(() => {
+    const socket = new SockJS("http://localhost:8080/ws");
 
-            <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 p-5 rounded-xl hover:border-blue-500 transition">
-              <h3 className="font-semibold text-lg">
-                React Performance Upgrade
-              </h3>
-              <p className="text-gray-400 mt-2">
-                New concurrent rendering improvements enhance UI responsiveness.
-              </p>
-            </div>
-          </div>
-        </div>
+    const client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+    });
 
-        {/* USER POSTS SECTION */}
+    client.onConnect = () => {
+      console.log("Feed connected ✅");
+
+      subscriptionRef.current = client.subscribe("/topic/feed", (msg) => {
+        const newPost = JSON.parse(msg.body);
+
+        console.log("New post:", newPost);
+
+        // 🔥 add to latest
+        setLatest((prev) => [newPost, ...prev]);
+      });
+    };
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+      if (client) {
+        client.deactivate();
+      }
+    };
+  }, []);
+
+  // 🔥 CREATE POST
+  const handlePost = async () => {
+    if (!input.trim()) return;
+
+    try {
+      await createPost(input);
+      setInput("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 🔥 POST CARD UI
+  const PostCard = ({ post }) => (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md">
+      <div className="flex items-center gap-3 mb-3">
+        <img
+          src={post.authorImage || "https://via.placeholder.com/40"}
+          className="w-10 h-10 rounded-full"
+        />
         <div>
-          <h2 className="text-xl font-semibold text-green-400 mb-4">
-            👥 User Posts
-          </h2>
-
-          <div className="space-y-6">
-            <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 p-5 rounded-xl hover:border-green-500 transition">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-full"></div>
-                <div>
-                  <p className="font-medium">Abhish Tarhekar</p>
-                  <p className="text-xs text-gray-400">2 hours ago</p>
-                </div>
-              </div>
-
-              <p className="text-gray-300">
-                Just integrated JWT authentication in QR Connect 🔥
-              </p>
-            </div>
-
-            <div className="bg-gray-900/60 backdrop-blur-lg border border-gray-800 p-5 rounded-xl hover:border-green-500 transition">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-purple-600 rounded-full"></div>
-                <div>
-                  <p className="font-medium">John Doe</p>
-                  <p className="text-xs text-gray-400">5 hours ago</p>
-                </div>
-              </div>
-
-              <p className="text-gray-300">
-                Excited to connect with developers via QR Connect 🚀
-              </p>
-            </div>
-          </div>
+          <p className="font-semibold">{post.authorName}</p>
+          <p className="text-xs text-gray-400">
+            {new Date(post.createdAt).toLocaleString()}
+          </p>
         </div>
-
       </div>
 
-      {/* Mobile Navigation */}
-      <MobileNav />
+      <p className="mb-3">{post.content}</p>
+
+      {post.imageUrl && <img src={post.imageUrl} className="rounded-lg mb-3" />}
+
+      {post.videoUrl && (
+        <video controls className="rounded-lg mb-3">
+          <source src={post.videoUrl} />
+        </video>
+      )}
+
+      <div className="text-sm text-gray-400">❤️ {post.likes} Likes</div>
     </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-black text-white">
+  <Sidebar />
+
+  <div className="flex-1 flex flex-col overflow-hidden">
+    <Topbar />
+
+    {/* 🔥 NAV BAR */}
+    {/* 🔥 PREMIUM NAVBAR */}
+<div className="sticky top-0 z-20 backdrop-blur-xl bg-white/5 border-b border-white/10 px-6 py-3">
+  <div className="flex items-center justify-between max-w-3xl mx-auto">
+
+    {/* LEFT - POSTS */}
+    <button
+      onClick={() => setActiveTab("posts")}
+      className="relative flex flex-col items-center text-sm group"
+    >
+      <span
+        className={`transition ${
+          activeTab === "posts"
+            ? "text-blue-400"
+            : "text-gray-400 group-hover:text-white"
+        }`}
+      >
+       <FaNewspaper size={40} />
+      </span>
+
+      {/* ACTIVE INDICATOR */}
+      {activeTab === "posts" && (
+        <div className="mt-1 h-[2px] w-6 bg-blue-500 rounded-full animate-pulse"></div>
+      )}
+    </button>
+
+    {/* CENTER - CREATE POST BUTTON */}
+    <button
+      onClick={() => navigate("/create-post")}
+      className="relative flex items-center justify-center w-14 h-14 rounded-full 
+      bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg 
+      hover:scale-110 transition-all duration-300 active:scale-95"
+    >
+      <span className="text-2xl font-bold"><FaPlus /></span>
+
+      {/* GLOW EFFECT */}
+      <div className="absolute inset-0 rounded-full bg-blue-500 blur-xl opacity-30 animate-pulse"></div>
+    </button>
+
+    {/* RIGHT - TECH NEWS */}
+    <button
+      onClick={() => setActiveTab("external")}
+      className="relative flex flex-col items-center text-sm group"
+    >
+      <span
+        className={`transition ${
+          activeTab === "external"
+            ? "text-purple-400"
+            : "text-gray-400 group-hover:text-white"
+        }`}
+      >
+        <FaGlobe size={40} />
+      </span>
+
+      {/* ACTIVE INDICATOR */}
+      {activeTab === "external" && (
+        <div className="mt-1 h-[2px] w-6 bg-purple-500 rounded-full animate-pulse"></div>
+      )}
+    </button>
+
+  </div>
+</div>
+
+    {/* 🔥 CONTENT */}
+    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
+      {/* 🆕 USER POSTS (DEFAULT) */}
+      {activeTab === "posts" && (
+        <>
+          <h2 className="text-xl font-bold">🆕 Latest Posts</h2>
+
+          {latest.length === 0 && (
+            <p className="text-gray-400">No posts yet</p>
+          )}
+
+          {latest.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </>
+      )}
+
+      {/* 🌍 TECH NEWS */}
+      {activeTab === "external" && (
+        <>
+          <h2 className="text-xl font-bold">🌍 Tech News</h2>
+
+          {external.length === 0 && (
+            <p className="text-gray-400">Loading news...</p>
+          )}
+
+          {external.map((post, index) => (
+            <div
+              key={index}
+              className="bg-gray-900 p-4 rounded-xl border border-gray-800"
+            >
+              {post.imageUrl && (
+                <img src={post.imageUrl} className="rounded-lg mb-3" />
+              )}
+
+              <h3 className="font-semibold text-lg">{post.title}</h3>
+
+              <p className="text-gray-400 text-sm">
+                {post.description || "No description available"}
+              </p>
+
+              <a
+                href={post.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-400 text-sm mt-2 inline-block"
+              >
+                Read more →
+              </a>
+
+              <p className="text-xs text-gray-500 mt-2">
+                Source: {post.source}
+              </p>
+            </div>
+          ))}
+        </>
+      )}
+
+    </div>
+  </div>
+
+  <MobileNav />
+</div>
   );
 }
 

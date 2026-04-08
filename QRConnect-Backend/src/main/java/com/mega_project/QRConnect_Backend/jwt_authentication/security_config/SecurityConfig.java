@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/profile/**",
                                 "/api/qr/**",
+                                "/api/feed/**",
                                 "/ws/**",
                                 "/ws/info/**",
                                 "/uploads/**"
