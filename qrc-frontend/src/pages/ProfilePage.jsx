@@ -16,6 +16,7 @@ import {
   getMyProfile,
   uploadProfileImage,
   updateProfile,
+  generateAISummary,
 } from "../services/profileService";
 
 function ProfilePage() {
@@ -37,6 +38,9 @@ function ProfilePage() {
 
   const [isProfileCreated, setIsProfileCreated] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const [aiSummary, setAiSummary] = useState("");
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const navigate = useNavigate();
 
@@ -64,7 +68,6 @@ function ProfilePage() {
         if (data.profileImageUrl) {
           setPreview(data.profileImageUrl);
         }
-
       } catch (err) {
         console.log("No profile found yet");
         setIsProfileCreated(false);
@@ -99,7 +102,6 @@ function ProfilePage() {
       alert("Profile saved successfully ✅");
 
       setIsEditing(false);
-
     } catch (err) {
       console.error(err);
     }
@@ -117,6 +119,23 @@ function ProfilePage() {
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
   };
+  // AI SUMMARY
+  const handleGenerateSummary = async () => {
+    try {
+      setLoadingAI(true);
+
+      const userId = localStorage.getItem("userId");
+
+      const res = await generateAISummary(userId);
+
+      setAiSummary(res.summary);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate summary ❌");
+    } finally {
+      setLoadingAI(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white">
@@ -127,23 +146,21 @@ function ProfilePage() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
             {/* FORM */}
             <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-6">
-              
               <h2 className="text-xl font-semibold mb-6">
                 {isProfileCreated ? "Your Profile" : "Create Your Profile"}
               </h2>
 
               <div className="space-y-4">
-
                 {/* IMAGE */}
                 <div>
                   <label className="cursor-pointer block">
-                    <div className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl 
+                    <div
+                      className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl 
                       ${isEditing ? "border-gray-600 hover:border-blue-500" : "border-gray-700 opacity-60"}
-                      bg-gray-800/40`}>
-
+                      bg-gray-800/40`}
+                    >
                       {preview ? (
                         <img
                           src={preview}
@@ -172,7 +189,7 @@ function ProfilePage() {
                 </div>
 
                 {/* INPUTS */}
-                {Object.keys(profile).map((key) => (
+                {Object.keys(profile).map((key) =>
                   key !== "bio" ? (
                     <input
                       key={key}
@@ -195,14 +212,12 @@ function ProfilePage() {
                       className={`w-full p-3 bg-gray-800 rounded border border-gray-700 
                         ${!isEditing && "opacity-60 cursor-not-allowed"}`}
                     />
-                  )
-                ))}
-
+                  ),
+                )}
               </div>
 
               {/* BUTTONS */}
               <div className="mt-6 flex gap-3">
-
                 {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
@@ -229,14 +244,11 @@ function ProfilePage() {
                     </button>
                   </>
                 )}
-
               </div>
             </div>
-
             {/* PREVIEW */}
             <div className="flex justify-center">
               <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                
                 <div className="flex flex-col items-center">
                   <img
                     src={preview || "https://via.placeholder.com/100"}
@@ -263,16 +275,77 @@ function ProfilePage() {
                 </div>
 
                 <div className="mt-6 border-t border-gray-800 pt-4 space-y-2">
-                  {profile.instagram && <div className="flex gap-2"><FaInstagram /> Instagram</div>}
-                  {profile.facebook && <div className="flex gap-2"><FaFacebook /> Facebook</div>}
-                  {profile.twitter && <div className="flex gap-2"><FaTwitter /> Twitter</div>}
-                  {profile.linkedin && <div className="flex gap-2"><FaLinkedin /> LinkedIn</div>}
-                  {profile.github && <div className="flex gap-2"><FaGithub /> Github</div>}
+                  {profile.instagram && (
+                    <div className="flex gap-2">
+                      <FaInstagram /> Instagram
+                    </div>
+                  )}
+                  {profile.facebook && (
+                    <div className="flex gap-2">
+                      <FaFacebook /> Facebook
+                    </div>
+                  )}
+                  {profile.twitter && (
+                    <div className="flex gap-2">
+                      <FaTwitter /> Twitter
+                    </div>
+                  )}
+                  {profile.linkedin && (
+                    <div className="flex gap-2">
+                      <FaLinkedin /> LinkedIn
+                    </div>
+                  )}
+                  {profile.github && (
+                    <div className="flex gap-2">
+                      <FaGithub /> Github
+                    </div>
+                  )}
                 </div>
-
               </div>
             </div>
+            // {/* AI SUMMARY */}
+            <div className="mt-6 bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold">🤖 AI Profile Summary</h3>
 
+                <button
+                  onClick={handleGenerateSummary}
+                  disabled={loadingAI}
+                  className={`px-4 py-1 rounded-lg text-sm ${
+                    loadingAI
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {loadingAI
+                    ? "Generating..."
+                    : aiSummary
+                      ? "Regenerate"
+                      : "Generate"}
+                </button>
+              </div>
+
+              {/* 🔥 LOADING */}
+              {loadingAI && (
+                <p className="text-gray-400 animate-pulse">
+                  AI is analyzing profile... ⏳
+                </p>
+              )}
+
+              {/* 🔥 SUMMARY DISPLAY */}
+              {!loadingAI && aiSummary && (
+                <div className="text-gray-300 whitespace-pre-line leading-relaxed">
+                  {aiSummary}
+                </div>
+              )}
+
+              {/* 🔥 EMPTY STATE */}
+              {!loadingAI && !aiSummary && (
+                <p className="text-gray-500 text-sm">
+                  No AI summary generated yet. Click "Generate" 🚀
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

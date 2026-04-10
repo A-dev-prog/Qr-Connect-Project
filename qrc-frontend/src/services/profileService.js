@@ -37,3 +37,24 @@ export const updateProfile = async (profileData) => {
   const res = await api.put("/profile/update", profileData);
   return res.data;
 };
+
+
+// ai 
+export const generateAISummary = async (userId) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(
+    `http://localhost:8080/api/profile/generate-summary/${userId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) throw new Error("Failed to generate summary");
+
+  return res.json();
+};
