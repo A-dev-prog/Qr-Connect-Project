@@ -2,7 +2,7 @@ package com.mega_project.QRConnect_Backend.controller;
 
 import com.mega_project.QRConnect_Backend.dtos.ProfileRequestDto;
 import com.mega_project.QRConnect_Backend.dtos.ProfileResponseDto;
-import com.mega_project.QRConnect_Backend.dtos.user_dtos.UserProfileResponseDto;
+import com.mega_project.QRConnect_Backend.service.AIService;
 import com.mega_project.QRConnect_Backend.service.ProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +11,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController {
 
     @Autowired
     private ProfileService profileService;
+    @Autowired
+    private AIService aiService;
 
     @PostMapping("/create")
     public ResponseEntity<?> createProfile(
@@ -63,6 +67,27 @@ public class ProfileController {
 
         profileService.updateProfile(userDetails.getUsername(), dto);
         return ResponseEntity.ok("Profile updated");
+    }
+
+    // 🔥 GENERATE AI SUMMARY
+    @PostMapping("/generate-summary/{userId}")
+    public ResponseEntity<?> generateSummary(@PathVariable Long userId) {
+
+        try {
+            String summary = profileService.generateAndSaveSummary(userId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "summary", summary
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace(); // 🔥 VERY IMPORTANT
+
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", e.getMessage()
+            ));
+        }
     }
 
 

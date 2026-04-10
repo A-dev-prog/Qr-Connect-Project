@@ -31,6 +31,9 @@ public class ProfileService  {
     @Autowired
     private ConnectionRepository connectionRepository;
 
+    @Autowired
+    private AIService aiService;
+
     public void createProfile(String email, ProfileRequestDto dto) {
 
         User user = userRepository.findByEmail(email)
@@ -107,6 +110,7 @@ public class ProfileService  {
         dto.setGithub(profile.getGithub());
         dto.setTwitter(profile.getTwitter());
         dto.setFacebook(profile.getFacebook());
+        dto.setAiSummary(profile.getAiSummary());
       dto.setConnectionStatus("NONE");
 
 
@@ -199,5 +203,25 @@ public class ProfileService  {
         profile.setGithub(dto.getGithub());
 
         profileRepository.save(profile);
+    }
+
+    // ai service: profile summary
+
+    public String generateAndSaveSummary(Long userId) {
+
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+        // 🔥 OPTIONAL: avoid regenerating
+        if (profile.getAiSummary() != null && !profile.getAiSummary().isEmpty()) {
+            return profile.getAiSummary();
+        }
+
+        String summary = aiService.generateSummary(profile);
+
+        profile.setAiSummary(summary);
+        profileRepository.save(profile);
+
+        return summary;
     }
 }

@@ -26,4 +26,6 @@ public class ProfileResponseDto {
 
     private String profileImageUrl;
     private String connectionStatus;
+
+    private String aiSummary;
 }
