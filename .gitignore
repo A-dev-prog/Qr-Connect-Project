@@ -2,6 +2,34 @@
 qrc-frontend/node_modules/
 qrc-frontend/dist/
 
+# =========================
+# 🔐 ENV (VERY IMPORTANT)
+# =========================
+.env
+*.env
+
+# =========================
+# 🐍 PYTHON CACHE FILES
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# 📦 VIRTUAL ENVIRONMENT
+# =========================
+venv/
+.env/
+.venv/
+
+# =========================
+# 🧪 TEST / CACHE
+# =========================
+.pytest_cache/
+.mypy_cache/
+
+
 # Backend
 QRConnect-Backend/target/
 uploads/
