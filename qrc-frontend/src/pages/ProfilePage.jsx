@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import MobileNav from "../components/MobileNav";
+import toast from "react-hot-toast";
 import {
   FaInstagram,
   FaFacebook,
@@ -99,11 +100,12 @@ function ProfilePage() {
         await uploadProfileImage(imageFile);
       }
 
-      alert("Profile saved successfully ✅");
+      toast.success("Profile saved successfully ✅");
 
       setIsEditing(false);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to save profile");
     }
   };
 
@@ -131,7 +133,7 @@ function ProfilePage() {
       setAiSummary(res.summary);
     } catch (err) {
       console.error(err);
-      alert("Failed to generate summary ❌");
+      toast.error("Failed to generate summary ❌");
     } finally {
       setLoadingAI(false);
     }

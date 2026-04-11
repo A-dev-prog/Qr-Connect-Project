@@ -4,7 +4,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import MobileNav from "../components/MobileNav";
-
+import toast from "react-hot-toast";
 import { scanUserQR } from "../services/qrService";
 import { sendConnectionRequest } from "../services/connectionService";
 
@@ -51,12 +51,13 @@ const QRScanner = () => {
             }
           } catch (e) {
             console.error("QR parse error:", e);
+            toast.error("Failed to parse QR code");
           }
 
           console.log("Final User ID:", userId);
 
           if (userId === loggedInUserId) {
-            alert("You can't scan your own QR ❌");
+            toast.error("You can't scan your own QR ❌");
             scannedRef.current = false;
             return;
           }
@@ -84,6 +85,7 @@ navigate(`/profile/${data.id || userId}`, {
 
           } catch (err) {
             console.error("Scan failed", err);
+            toast.error("Failed to scan QR code");
             scannedRef.current = false;
           }
         }
@@ -105,9 +107,10 @@ navigate(`/profile/${data.id || userId}`, {
   const handleSendRequest = async () => {
     try {
       await sendConnectionRequest(profile.id);
-      alert("Request Sent ✅");
+      toast.success("Request Sent ✅");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to send connection request");
     }
   };
 

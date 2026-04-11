@@ -13,10 +13,22 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicProfilePage from "./pages/PublicProfilePage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import QRScanner from "./pages/QRScanner";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-  
+  <>
+
+  <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#111827",
+            color: "#fff",
+            border: "1px solid #374151",
+          },
+        }}
+      />
 
     <Routes>
       <Route path="/" element={<Homepage/>} />
@@ -79,6 +91,8 @@ function App() {
         </ProtectedRoute>
       } />
     </Routes>
+
+    </>
     
     
   );

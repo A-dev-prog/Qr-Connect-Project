@@ -1,8 +1,8 @@
 import Sidebar from "../components/Sidebar";
 import MobileNav from "../components/MobileNav";
 import { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { getMyConnections } from "../services/connectionService";
+import { getChatHistory } from "../services/chatService";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
@@ -14,21 +14,24 @@ function ChatPage() {
   const [isConnected, setIsConnected] = useState(false);
 
   const bottomRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const stompClientRef = useRef(null);
   const subscriptionRef = useRef(null);
   const connectedRef = useRef(false);
 
   const [connections, setConnections] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
-  const receiverId = activeUser?.id;
 
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  // 🔥 LOAD CONNECTIONS
   useEffect(() => {
     const loadConnections = async () => {
       try {
         const data = await getMyConnections();
         setConnections(data);
 
-        // 🔥 auto select first user
         if (data.length > 0) {
           setActiveUser(data[0]);
         }
@@ -43,8 +46,8 @@ function ChatPage() {
   // 🔥 CONNECT WEBSOCKET
   useEffect(() => {
     if (!currentUserId) return;
-
     if (connectedRef.current) return;
+
     connectedRef.current = true;
 
     const socket = new SockJS("http://localhost:8080/ws");
@@ -61,21 +64,24 @@ function ChatPage() {
       setIsConnected(true);
       stompClientRef.current = client;
 
-      // 🔥 unsubscribe old
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
       }
 
-      // 🔥 subscribe
       subscriptionRef.current = client.subscribe(
         `/topic/messages/${currentUserId}`,
         (msg) => {
           const newMessage = JSON.parse(msg.body);
 
-          console.log("Received:", newMessage);
+          // ✅ show only for active chat
+          if (
+            newMessage.senderId !== activeUser?.id &&
+            newMessage.receiverId !== activeUser?.id
+          ) {
+            return;
+          }
 
           setMessages((prev) => {
-            // 🔥 prevent duplicate
             if (prev.find((m) => m.id === newMessage.id)) {
               return prev;
             }
@@ -83,37 +89,120 @@ function ChatPage() {
             return [
               ...prev,
               {
-                id: newMessage.id || `${newMessage.senderId}-${Date.now()}`,
+                id:
+                  newMessage.id ||
+                  `${newMessage.senderId}-${Date.now()}`,
                 text: newMessage.content,
-                sender: newMessage.senderId == currentUserId ? "me" : "other",
+                sender:
+                  newMessage.senderId === currentUserId
+                    ? "me"
+                    : "other",
+                time: newMessage.timestamp,
               },
             ];
           });
-        },
+        }
       );
     };
 
     client.activate();
 
     return () => {
-      console.log("Cleaning socket ❌");
-
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
       }
 
       if (stompClientRef.current) {
         stompClientRef.current.deactivate();
-        stompClientRef.current = null;
       }
 
       connectedRef.current = false;
       setIsConnected(false);
     };
-  }, [currentUserId]);
+  }, [currentUserId, activeUser]);
 
-  // 🔥 AUTO SCROLL
+  // 🔥 LOAD CHAT HISTORY
+  useEffect(() => {
+    if (!activeUser) return;
+
+    const loadHistory = async () => {
+      try {
+        const data = await getChatHistory(
+          currentUserId,
+          activeUser.id,
+          0
+        );
+
+        const formatted = data.map((msg) => ({
+          id: msg.id,
+          text: msg.content,
+          sender: msg.senderId === currentUserId ? "me" : "other",
+          time: msg.timestamp,
+        }));
+
+        setMessages(formatted);
+        setPage(1);
+        setHasMore(true);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadHistory();
+  }, [activeUser]);
+
+  // 🔥 SCROLL LOAD MORE
+  const handleScroll = async () => {
+    if (!chatContainerRef.current) return;
+
+    const top = chatContainerRef.current.scrollTop;
+
+    if (top === 0 && hasMore && activeUser) {
+      try {
+        const prevHeight = chatContainerRef.current.scrollHeight;
+
+        const data = await getChatHistory(
+          currentUserId,
+          activeUser.id,
+          page
+        );
+
+        if (data.length === 0) {
+          setHasMore(false);
+          return;
+        }
+
+        const formatted = data.map((msg) => ({
+          id: msg.id,
+          text: msg.content,
+          sender: msg.senderId === currentUserId ? "me" : "other",
+          time: msg.timestamp,
+        }));
+
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newMsgs = formatted.filter(
+            (m) => !existingIds.has(m.id)
+          );
+
+          return [...newMsgs, ...prev];
+        });
+
+        setPage((prev) => prev + 1);
+
+        // maintain scroll
+        setTimeout(() => {
+          const newHeight = chatContainerRef.current.scrollHeight;
+          chatContainerRef.current.scrollTop =
+            newHeight - prevHeight;
+        }, 0);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  // 🔥 AUTO SCROLL TO BOTTOM
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -122,24 +211,21 @@ function ChatPage() {
   const handleSend = () => {
     if (!input.trim()) return;
 
-    // ✅ ADD THIS CHECK
     if (!activeUser) {
       alert("Select a user first");
       return;
     }
 
     if (!isConnected) {
-      alert("Connecting... please wait ⏳");
+      alert("Connecting...");
       return;
     }
 
-    const client = stompClientRef.current;
-
-    client.publish({
+    stompClientRef.current.publish({
       destination: "/app/chat.send",
       body: JSON.stringify({
         senderId: currentUserId,
-        receiverId: Number(activeUser.id),
+        receiverId: activeUser.id,
         content: input,
       }),
     });
@@ -148,10 +234,12 @@ function ChatPage() {
   };
 
   return (
-    <div className="flex bg-gradient-to-br from-gray-950 via-gray-900 to-black min-h-screen text-white">
-      <Sidebar />
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white">
+      <div className="h-full">
+  <Sidebar />
+</div>
 
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col md:flex-row h-full">
         {/* USERS LIST */}
         <div className="hidden md:block w-80 border-r border-gray-800 bg-gray-950 p-4">
           <h2 className="text-lg font-semibold mb-4">Chats</h2>
@@ -162,22 +250,27 @@ function ChatPage() {
                 key={user.id}
                 onClick={() => {
                   setActiveUser(user);
-                  setMessages([]); // clear old chat
+                  setMessages([]);
                 }}
-                className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 transition ${
+                className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 ${
                   activeUser?.id === user.id
                     ? "bg-blue-600"
                     : "bg-gray-900 hover:bg-gray-800"
                 }`}
               >
                 <img
-                  src={user.profileImageUrl || "https://via.placeholder.com/40"}
-                  className="w-10 h-10 rounded-full object-cover"
+                  src={
+                    user.profileImageUrl ||
+                    "https://via.placeholder.com/40"
+                  }
+                  className="w-10 h-10 rounded-full"
                 />
 
                 <div>
-                  <p className="font-medium">{user.name}</p>
-                  <p className="text-sm text-gray-400">{user.profession}</p>
+                  <p>{user.name}</p>
+                  <p className="text-sm text-gray-400">
+                    {user.profession}
+                  </p>
                 </div>
               </div>
             ))}
@@ -185,55 +278,70 @@ function ChatPage() {
         </div>
 
         {/* CHAT */}
-        <div className="flex-1 flex flex-col">
-          {/* HEADER */}
-          <div className="border-b border-gray-800 p-4 flex items-center gap-3 bg-gray-900/60 backdrop-blur-lg">
+        <div className="flex-1 flex flex-col h-full">
+          <div className="border-b border-gray-800 p-4 flex gap-3">
             <img
               src={
-                activeUser?.profileImageUrl || "https://via.placeholder.com/40"
+                activeUser?.profileImageUrl ||
+                "https://via.placeholder.com/40"
               }
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full"
             />
             <div>
-              <p className="font-semibold">
-                {activeUser?.name || "Select User"}
-              </p>
-              <p className="text-sm text-green-400">Online</p>
+              <p>{activeUser?.name || "Select User"}</p>
+              <p className="text-green-400 text-sm">Online</p>
             </div>
           </div>
 
           {/* MESSAGES */}
-          <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-            {messages.map((msg, index) => (
+          <div
+            ref={chatContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 p-6 space-y-4 overflow-y-auto"
+          >
+            {messages.map((msg) => (
               <div
-                key={msg.id || index}
-                className={`max-w-xs md:max-w-md px-4 py-2 rounded-xl ${
-                  msg.sender === "me" ? "bg-blue-600 ml-auto" : "bg-gray-800"
+                key={msg.id}
+                className={`max-w-xs px-4 py-2 rounded-xl ${
+                  msg.sender === "me"
+                    ? "bg-blue-600 ml-auto"
+                    : "bg-gray-800"
                 }`}
               >
-                {msg.text}
+                <p>{msg.text}</p>
+
+                {msg.time && (
+                  <p className="text-xs text-gray-300 text-right mt-1">
+                    {new Date(msg.time).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                )}
               </div>
             ))}
+
             <div ref={bottomRef}></div>
           </div>
 
           {/* INPUT */}
-          <div className="border-t border-gray-800 p-4 flex gap-3 bg-gray-950">
+          <div className="border-t border-gray-800 p-4 flex gap-3">
             <input
-              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-gray-800 p-3 rounded-lg outline-none"
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="flex-1 bg-gray-800 p-3 rounded-lg"
+              placeholder="Type message..."
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleSend()
+              }
             />
 
             <button
               onClick={handleSend}
               disabled={!isConnected}
-              className={`px-6 py-2 rounded-lg ${
+              className={`px-6 rounded-lg ${
                 isConnected
-                  ? "bg-blue-600 hover:bg-blue-700"
+                  ? "bg-blue-600"
                   : "bg-gray-600 cursor-not-allowed"
               }`}
             >

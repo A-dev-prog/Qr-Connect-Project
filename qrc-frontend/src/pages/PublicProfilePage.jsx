@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { sendConnectionRequest } from "../services/connectionService";
 import api from "../services/api";
+import toast from "react-hot-toast";
 
 function PublicProfilePage() {
 
@@ -23,6 +24,7 @@ function PublicProfilePage() {
       setConnectionStatus(res.data.connectionStatus);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch profile");
     }
   };
 
@@ -37,11 +39,11 @@ function PublicProfilePage() {
       await sendConnectionRequest(id);
 
       setConnectionStatus("PENDING");
-      alert("Connection request sent");
+      toast.success("Connection request sent");
 
     } catch (err) {
       console.error(err);
-      alert("Failed");
+      toast.error("Failed to send connection request");
     }
     setLoading(false);
   };

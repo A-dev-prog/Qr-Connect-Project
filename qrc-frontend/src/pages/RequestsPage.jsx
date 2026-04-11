@@ -6,6 +6,7 @@ import {
   getPendingRequests,
   respondToRequest,
 } from "../services/connectionService";
+import toast from "react-hot-toast";
 
 function RequestsPage() {
   const [requests, setRequests] = useState([]);
@@ -36,6 +37,7 @@ function RequestsPage() {
       setRequests((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       console.error(err);
+      toast.error("Failed to respond to request");
     }
   };
 

@@ -4,6 +4,7 @@ import Topbar from "../components/Topbar";
 import MobileNav from "../components/MobileNav";
 import { generateQR } from "../services/qrService";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function QRPage() {
 
@@ -21,6 +22,7 @@ function QRPage() {
 
       } catch (error) {
         console.error("QR generation failed", error);
+        toast.error("Failed to generate QR code");
       }
     };
 

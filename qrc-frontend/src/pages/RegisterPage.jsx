@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authService";
+import toast from "react-hot-toast";
 
 function RegisterPage() {
 
@@ -33,7 +34,7 @@ function RegisterPage() {
 
     } catch (error) {
       console.error(error);
-      alert("Registration failed");
+      toast.error("Registration failed");
     }
   };
 

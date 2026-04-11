@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
+import toast from "react-hot-toast";
 
 function LoginPage() {
 
@@ -33,7 +34,7 @@ function LoginPage() {
 
     } catch (error) {
       console.error(error);
-      alert("Login failed");
+      toast.error("Login failed");
     }
   };
 
@@ -69,6 +70,7 @@ function LoginPage() {
 
         {/* Login Button */}
         <button
+        toast="Logging in successfully..."
           type="submit"
           className="w-full bg-blue-500 hover:bg-blue-600 transition p-3 rounded text-white font-medium"
         >
