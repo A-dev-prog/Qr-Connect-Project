@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 "/api/profile/**",
                                 "/ai/profile-summary/**",
                                 "/api/qr/**",
+                                "/api/notifications/**",
                                 "/api/feed/**",
                                 "/ws/**",
                                 "/ws/info/**",

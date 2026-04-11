@@ -1,4 +1,4 @@
-package com.mega_project.QRConnect_Backend.dtos;
+package com.mega_project.QRConnect_Backend.dtos.chat_dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

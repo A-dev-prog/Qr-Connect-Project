@@ -1,14 +1,13 @@
 package com.mega_project.QRConnect_Backend.repository;
 
+import com.mega_project.QRConnect_Backend.entity.Notification;
 import com.mega_project.QRConnect_Backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface NotificationRepository extends JpaRepository<Notification,Long> {
 
-    Optional<User> findByEmail(String email);
-
-
-//    User findByUsername(String username);
+    List<Notification> findByReceiverIdOrderByCreatedAtDesc(Long receiverId);
 }

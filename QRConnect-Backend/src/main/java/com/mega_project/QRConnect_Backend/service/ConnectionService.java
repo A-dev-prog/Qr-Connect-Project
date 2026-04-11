@@ -27,7 +27,7 @@ public class ConnectionService {
     @Autowired
     private ProfileRepository profileRepository;
     @Autowired
-    private ProfileService profileService;
+    private NotificationService notificationService;
 
     public void sendRequest(String senderEmail, Long receiverId) {
 
@@ -55,6 +55,15 @@ public class ConnectionService {
         );
 
         connectionRepository.save(connection);
+
+        notificationService.sendNotification(
+                connection.getReceiver().getId(), // who accepted
+                connection.getSender().getId(),   // who sent request
+                connection.getReceiver().getEmail() + " accepted your request 🤝",
+                "CONNECTION"
+        );
+
+
     }
 
     public List<PendingRequestDto> getPendingRequests(String email) {

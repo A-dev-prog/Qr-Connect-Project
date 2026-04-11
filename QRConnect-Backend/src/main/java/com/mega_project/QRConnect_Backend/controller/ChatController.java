@@ -1,13 +1,19 @@
 package com.mega_project.QRConnect_Backend.controller;
 
-import com.mega_project.QRConnect_Backend.dtos.ChatMessageDto;
+import com.mega_project.QRConnect_Backend.dtos.chat_dtos.ChatMessageDto;
+import com.mega_project.QRConnect_Backend.dtos.chat_dtos.MessageResponseDto;
 import com.mega_project.QRConnect_Backend.entity.Message;
 import com.mega_project.QRConnect_Backend.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/ws")
@@ -46,6 +52,21 @@ public class ChatController {
         messagingTemplate.convertAndSend(
                 "/topic/messages/" + messageDto.getSenderId(),
                 response
+        );
+    }
+
+    // get older chat history
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getChatHistory(
+            @RequestParam Long senderId,
+            @RequestParam Long receiverId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+
+        return ResponseEntity.ok(
+                chatService.getChatHistory(senderId, receiverId, page, size)
         );
     }
 }
