@@ -39,9 +39,10 @@ public class NotificationService {
     }
 
     public void markAsRead(Long id) {
-        Notification n = notificationRepository.findById(id).orElseThrow();
+        Notification n = notificationRepository.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
         n.setRead(true);
         notificationRepository.save(n);
     }
+
 }
 

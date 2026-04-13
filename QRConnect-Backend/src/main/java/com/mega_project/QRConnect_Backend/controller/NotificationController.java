@@ -3,6 +3,7 @@ package com.mega_project.QRConnect_Backend.controller;
 import com.mega_project.QRConnect_Backend.entity.Notification;
 import com.mega_project.QRConnect_Backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +20,9 @@ public class NotificationController {
         return notificationService.getUserNotifications(userId);
     }
 
-    @PutMapping("/read/{id}")
-    public void markAsRead(@PathVariable Long id) {
+    @PutMapping("/{id}/read")
+    public ResponseEntity<?> markAsRead(@PathVariable Long id) {
         notificationService.markAsRead(id);
+        return ResponseEntity.ok("Marked as read");
     }
 }
