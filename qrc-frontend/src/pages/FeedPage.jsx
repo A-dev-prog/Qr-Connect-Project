@@ -191,7 +191,7 @@ const navigate = useNavigate();
 </div>
 
     {/* 🔥 CONTENT */}
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
 
       {/* 🆕 USER POSTS (DEFAULT) */}
       {activeTab === "posts" && (

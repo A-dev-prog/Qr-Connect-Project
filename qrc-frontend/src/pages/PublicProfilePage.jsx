@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams , useNavigate } from "react-router-dom";
 import { sendConnectionRequest } from "../services/connectionService";
 import api from "../services/api";
 import toast from "react-hot-toast";
+import BackButton from "../components/BackButton";
 
 function PublicProfilePage() {
 
+   const navigate = useNavigate();
   const { id } = useParams();
+  
 
   // ✅ STATE (TOP ALWAYS)
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("NONE");
+  
 
   // ✅ SINGLE CLEAN useEffect
   useEffect(() => {
@@ -169,7 +173,9 @@ END:VCARD
         {connectionStatus === "ACCEPTED" && (
           <div className="mt-6 space-y-3">
 
-            <button className="w-full bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg">
+            <button
+             onClick={() => navigate(`/chat/${id}`)}
+             className="w-full bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg">
               Chat
             </button>
 
@@ -183,7 +189,7 @@ END:VCARD
           </div>
         )}
 
-        {/* ✅ WORK / POSTS SECTION */}
+        {/* ✅ WORK / POSTS SECTION 
         {connectionStatus === "ACCEPTED" && (
           <div className="mt-8">
             <h3 className="text-lg font-semibold mb-3 text-center">
@@ -206,7 +212,7 @@ END:VCARD
 
             </div>
           </div>
-        )}
+        )} */}
 
       </div>
 

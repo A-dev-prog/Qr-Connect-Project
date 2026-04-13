@@ -5,6 +5,7 @@ import { getMyConnections } from "../services/connectionService";
 import { getChatHistory } from "../services/chatService";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { useParams } from "react-router-dom";
 
 function ChatPage() {
   const currentUserId = Number(localStorage.getItem("userId"));
@@ -24,6 +25,10 @@ function ChatPage() {
 
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+
+  
+
+  const { id } = useParams();
 
   // 🔥 LOAD CONNECTIONS
   useEffect(() => {
@@ -233,6 +238,16 @@ function ChatPage() {
     setInput("");
   };
 
+  useEffect(() => {
+  if (!id || connections.length === 0) return;
+
+  const user = connections.find((u) => u.id == id);
+
+  if (user) {
+    setActiveUser(user);
+  }
+}, [id, connections]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white">
       <div className="h-full">
@@ -297,7 +312,7 @@ function ChatPage() {
           <div
             ref={chatContainerRef}
             onScroll={handleScroll}
-            className="flex-1 p-6 space-y-4 overflow-y-auto"
+            className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8"
           >
             {messages.map((msg) => (
               <div

@@ -146,7 +146,7 @@ function ProfilePage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* FORM */}
             <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-6">
