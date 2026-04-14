@@ -1,6 +1,7 @@
 package com.mega_project.QRConnect_Backend.service;
 
 import com.mega_project.QRConnect_Backend.dtos.ProfileResponseDto;
+import com.mega_project.QRConnect_Backend.dtos.connection_dto.ConnectionDto;
 import com.mega_project.QRConnect_Backend.dtos.connection_dto.PendingRequestDto;
 import com.mega_project.QRConnect_Backend.dtos.previev_dto.ScanFullResponse;
 import com.mega_project.QRConnect_Backend.dtos.previev_dto.ScanPreviewResponse;
@@ -131,32 +132,32 @@ public class ConnectionService {
         return buildFullProfileResponse(targetProfile, "CONNECTED");
     }
 
-    public List<ProfileResponseDto> getMyConnections(String email) {
+    public List<ConnectionDto> getMyConnections(String email) {
 
         User currentUser = userRepository.findByEmail(email)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Connection> connections =
                 connectionRepository.findAcceptedConnections(currentUser);
 
         return connections.stream().map(conn -> {
 
+            // 🔥 get other user
             User otherUser = conn.getSender().equals(currentUser)
                     ? conn.getReceiver()
                     : conn.getSender();
 
             Profile profile = profileRepository.findByUser(otherUser)
-                    .orElseThrow();
+                    .orElseThrow(() -> new RuntimeException("Profile not found"));
 
-            ProfileResponseDto dto = new ProfileResponseDto();
-
-            dto.setId(profile.getId());
-            dto.setName(profile.getName());
-            dto.setProfession(profile.getProfession());
-            dto.setBio(profile.getBio());
-            dto.setProfileImageUrl(profile.getProfileImageUrl()); // 🔥 IMPORTANT
-
-            return dto;
+            // 🔥 return clean DTO
+            return new ConnectionDto(
+                    otherUser.getId(),                     // ✅ IMPORTANT (for navigation)
+                    profile.getName(),
+                    profile.getProfileImageUrl(),
+                    profile.getProfession(),
+                    otherUser.getEmail()                   // optional but useful
+            );
 
         }).toList();
     }

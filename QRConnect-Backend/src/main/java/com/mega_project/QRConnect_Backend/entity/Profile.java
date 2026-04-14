@@ -22,6 +22,7 @@ public class Profile {
     private Long id;
     private String name;
     private String email;
+    @Column(nullable = false)
     private String contactNumber;
     private String facebook;
     private String instagram;
