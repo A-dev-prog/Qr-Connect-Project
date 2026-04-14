@@ -253,7 +253,7 @@ function ProfilePage() {
               <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl p-6">
                 <div className="flex flex-col items-center">
                   <img
-                    src={preview || "https://via.placeholder.com/100"}
+                    src={preview || "https://ui-avatars.com/api/?name=User&background=random"}
                     alt="profile"
                     className="w-24 h-24 rounded-full mb-4 object-cover border border-gray-700"
                   />

@@ -204,7 +204,7 @@ function Topbar() {
       ? user.profileImageUrl.startsWith("http")
         ? user.profileImageUrl // ✅ already full URL
         : `http://localhost:8080/${user.profileImageUrl}` // ✅ relative path
-      : "https://via.placeholder.com/150"
+      : "https://ui-avatars.com/api/?name=User&background=random"
   }
   alt="profile"
   className="w-10 h-10 rounded-full object-cover"

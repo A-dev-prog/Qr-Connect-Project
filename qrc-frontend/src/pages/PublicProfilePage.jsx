@@ -90,7 +90,7 @@ END:VCARD
   src={
     profile?.profileImageUrl
       ? profile.profileImageUrl
-      : "https://via.placeholder.com/100"
+      : "https://ui-avatars.com/api/?name=User&background=random"
   }
   alt="profile"
   className="w-24 h-24 rounded-full object-cover border border-gray-700"

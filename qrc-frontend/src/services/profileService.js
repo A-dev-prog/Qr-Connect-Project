@@ -38,6 +38,15 @@ export const updateProfile = async (profileData) => {
   return res.data;
 };
 
+export const getProfileImage = (user) => {
+  if (user?.profileImageUrl) {
+    return user.profileImageUrl.startsWith("http")
+      ? user.profileImageUrl
+      : `http://localhost:8080/${user.profileImageUrl}`;
+  }
+
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=random`;
+};
 
 // ai 
 export const generateAISummary = async (userId) => {
@@ -57,4 +66,6 @@ export const generateAISummary = async (userId) => {
   if (!res.ok) throw new Error("Failed to generate summary");
 
   return res.json();
+
+
 };

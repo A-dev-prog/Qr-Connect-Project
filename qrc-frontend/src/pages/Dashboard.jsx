@@ -142,7 +142,7 @@ function Dashboard() {
               {connections.slice(0, 5).map((c) => (
                 <img
                   key={c.id}
-                  src={c.profileImageUrl || "https://via.placeholder.com/150"}
+                  src={c.profileImageUrl || "https://ui-avatars.com/api/?name=User&background=random"}
                   alt="connection"
                   onClick={() => navigate(`/profile/${c.id}`)}
                   className="w-12 h-12 rounded-full object-cover border-2 border-black -ml-2 first:ml-0 cursor-pointer hover:scale-110 transition"
