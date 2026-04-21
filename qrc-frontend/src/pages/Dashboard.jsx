@@ -1,12 +1,15 @@
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import MobileNav from "../components/MobileNav";
+import DemoTour from "../animation/DemoTour" // ✅ import demo
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getMyConnections } from "../services/connectionService";
 
 function Dashboard() {
   const navigate = useNavigate();
+
+  const [showDemo, setShowDemo] = useState(false); // ✅ demo state
 
   const user = {
     name: "User",
@@ -37,29 +40,42 @@ function Dashboard() {
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white overflow-hidden">
       
-      {/* ✅ SIDEBAR (fixed) */}
+      {/* 🔥 DEMO OVERLAY */}
+      {showDemo && <DemoTour onClose={() => setShowDemo(false)} />}
+
+      {/* SIDEBAR */}
       <Sidebar />
 
-      {/* ✅ MAIN LAYOUT */}
+      {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden">
         
-        {/* ✅ TOPBAR (fixed) */}
+        {/* TOPBAR */}
         <Topbar />
 
-        {/* ✅ SCROLLABLE CONTENT */}
+        {/* CONTENT */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
 
           {/* 🔥 WELCOME */}
-          <div>
-            <h2 className="text-2xl font-bold">
-              Welcome back, {user.name} 👋
-            </h2>
-            <p className="text-gray-400">
-              Here's what's happening today
-            </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">
+                Welcome back, {user.name} 👋
+              </h2>
+              <p className="text-gray-400">
+                Here's what's happening today
+              </p>
+            </div>
+
+            {/* 🎬 DEMO BUTTON */}
+            <button
+  onClick={() => setShowDemo(true)}
+  className="bg-purple-600 px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+>
+  🎬 Watch Demo
+</button>
           </div>
 
-          {/* 🔥 QUICK ACTIONS */}
+          {/* QUICK ACTIONS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <div
@@ -93,7 +109,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 PROFILE COMPLETION */}
+          {/* PROFILE COMPLETION */}
           {!user.profileCompleted && (
             <div className="bg-blue-900/30 border border-blue-800 p-6 rounded-xl flex justify-between items-center">
               <div>
@@ -114,7 +130,7 @@ function Dashboard() {
             </div>
           )}
 
-          {/* 🔥 RECENT ACTIVITY */}
+          {/* RECENT ACTIVITY */}
           <div>
             <h3 className="text-xl font-semibold mb-4">
               Recent Activity
@@ -132,22 +148,31 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 CONNECTION PREVIEW */}
+          {/* CONNECTION PREVIEW */}
           <div>
             <h3 className="text-xl font-semibold mb-4">
               Your Network 👥
             </h3>
 
             <div className="flex items-center">
-              {connections.slice(0, 5).map((c) => (
-                <img
-                  key={c.id}
-                  src={c.profileImageUrl || "https://ui-avatars.com/api/?name=User&background=random"}
-                  alt="connection"
-                  onClick={() => navigate(`/profile/${c.id}`)}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-black -ml-2 first:ml-0 cursor-pointer hover:scale-110 transition"
-                />
-              ))}
+              {connections.slice(0, 5).map((c) => {
+                const imageUrl =
+                  c.profileImageUrl && c.profileImageUrl.trim() !== ""
+                    ? c.profileImageUrl.startsWith("http")
+                      ? c.profileImageUrl
+                      : `http://localhost:8080/${c.profileImageUrl}`
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name || "User")}&background=random`;
+
+                return (
+                  <img
+                    key={c.id}
+                    src={imageUrl}
+                    alt="connection"
+                    onClick={() => navigate(`/profile/${c.id}`)}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-black -ml-2 first:ml-0 cursor-pointer hover:scale-110 transition"
+                  />
+                );
+              })}
 
               {connections.length > 5 && (
                 <span className="ml-3 text-sm text-gray-400">
@@ -167,7 +192,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* MOBILE NAV */}
       <MobileNav />
     </div>
   );

@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import toast from "react-hot-toast";
+import { useLoading } from "../context/LoadingContext";
 
 function LoginPage() {
 
   const navigate = useNavigate();
+
+  const { setLoading } = useLoading();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -24,13 +27,18 @@ function LoginPage() {
 
     try {
 
+      setLoading(true);
+
       const res = await loginUser(formData);
 
       // save JWT token
       localStorage.setItem("token", res.token);
 
       // navigate to dashboard
+      setTimeout(() => {
       navigate("/dashboard");
+      setLoading(false);
+    }, 1000);
 
     } catch (error) {
       console.error(error);

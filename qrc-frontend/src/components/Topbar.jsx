@@ -5,8 +5,11 @@ import { Client } from "@stomp/stompjs";
 import { getNotifications } from "../services/notificationService";
 import { getMyProfile } from "../services/profileService"; // ✅ ADD
 import toast from "react-hot-toast";
+import { useLoading } from "../context/LoadingContext";
 
 function Topbar() {
+  const { setLoading } = useLoading();
+
   const navigate = useNavigate();
   const userId = Number(localStorage.getItem("userId"));
 
@@ -85,13 +88,13 @@ function Topbar() {
   // 🔥 OUTSIDE CLICK
   useEffect(() => {
     const handleClickOutside = (e) => {
-  if (notifRef.current && !notifRef.current.contains(e.target)) {
-    setShowNotifDropdown(false);
-  }
-  if (profileRef.current && !profileRef.current.contains(e.target)) {
-    setShowProfileDropdown(false);
-  }
-};
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifDropdown(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.addEventListener("click", handleClickOutside);
@@ -128,8 +131,12 @@ function Topbar() {
 
   // 🔥 LOGOUT
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+    setLoading(true);
+    setTimeout(() => {
+      localStorage.clear();
+      navigate("/");
+      setLoading(false);
+    }, 800);
   };
 
   return (
@@ -199,21 +206,21 @@ function Topbar() {
         {/* 👤 PROFILE */}
         <div className="relative" ref={profileRef}>
           <img
-  src={
-    user?.profileImageUrl && user.profileImageUrl.trim() !== ""
-      ? user.profileImageUrl.startsWith("http")
-        ? user.profileImageUrl // ✅ already full URL
-        : `http://localhost:8080/${user.profileImageUrl}` // ✅ relative path
-      : "https://ui-avatars.com/api/?name=User&background=random"
-  }
-  alt="profile"
-  className="w-10 h-10 rounded-full object-cover"
-  onClick={(e) => {
-  e.stopPropagation(); // ✅ important
-  setShowProfileDropdown((prev) => !prev);
-  setShowNotifDropdown(false);
-}}
-/>
+            src={
+              user?.profileImageUrl && user.profileImageUrl.trim() !== ""
+                ? user.profileImageUrl.startsWith("http")
+                  ? user.profileImageUrl // ✅ already full URL
+                  : `http://localhost:8080/${user.profileImageUrl}` // ✅ relative path
+                : "https://ui-avatars.com/api/?name=User&background=random"
+            }
+            alt="profile"
+            className="w-10 h-10 rounded-full object-cover"
+            onClick={(e) => {
+              e.stopPropagation(); // ✅ important
+              setShowProfileDropdown((prev) => !prev);
+              setShowNotifDropdown(false);
+            }}
+          />
 
           {showProfileDropdown && (
             <div

@@ -14,8 +14,13 @@ import PublicProfilePage from "./pages/PublicProfilePage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import QRScanner from "./pages/QRScanner";
 import { Toaster } from "react-hot-toast";
+import { useLoading } from "./context/LoadingContext";
+import PageLoader from "./components/PageLoader";
 
 function App() {
+
+  const { loading } = useLoading();
+  
   return (
   <>
 
@@ -29,6 +34,8 @@ function App() {
           },
         }}
       />
+
+      {loading && <PageLoader />}
 
     <Routes>
       <Route path="/" element={<Homepage/>} />
